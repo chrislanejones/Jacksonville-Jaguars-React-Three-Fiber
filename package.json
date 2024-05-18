@@ -14,12 +14,10 @@
     "@react-three/drei": "^9.105.6",
     "@react-three/fiber": "^8.16.6",
     "@react-three/postprocessing": "^2.16.2",
-    "@types/three": "^0.164.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
-    "three": "^0.164.1",
-    "three-stdlib": "^2.30.0"
+    "three": "^0.164.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.2",
