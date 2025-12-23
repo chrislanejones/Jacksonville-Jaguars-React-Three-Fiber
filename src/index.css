@@ -1,10 +1,4 @@
-@import url("https://rsms.me/inter/inter.css");
-@import url("https://fonts.googleapis.com/css2?family=Antonio:wght@600&display=swap");
-
-* {
-  box-sizing: border-box;
-}
-
+/* ✅ Fix the container chain so the Canvas can actually expand */
 html,
 body,
 #root {
@@ -13,34 +7,48 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #e6eaf5 0%, #f6f6f6 80%);
 }
 
 body {
-  position: fixed;
-  overflow: hidden;
-  overscroll-behavior-y: none;
-  font-family: "Inter var", sans-serif;
-  cursor: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMwLjUgMTZDMzAuNSAyNC4wMDgxIDI0LjAwODEgMzAuNSAxNiAzMC41QzcuOTkxODcgMzAuNSAxLjUgMjQuMDA4MSAxLjUgMTZDMS41IDcuOTkxODcgNy45OTE4NyAxLjUgMTYgMS41QzI0LjAwODEgMS41IDMwLjUgNy45OTE4NyAzMC41IDE2WiIgc3Ryb2tlPSJibGFjayIvPgo8cGF0aCBkPSJNNiA5QzcuNjU2ODUgOSA5IDcuNjU2ODUgOSA2QzkgNC4zNDMxNSA3LjY1Njg1IDMgNiAzQzQuMzQzMTUgMyAzIDQuMzQzMTUgMyA2QzMgNy42NTY4NSA0LjM0MzE1IDkgNiA5WiIgZmlsbD0iYmxhY2siLz4KPC9zdmc+Cg=="),
-    auto;
+  background-color: #020617; /* Deepest black backup */
+
+  /* 
+    We layer two gradients:
+    1. A subtle "spotlight" of Jaguars Teal
+    2. The deep dark base
+  */
+  background-image: radial-gradient(
+      circle at 50% 50%,
+      rgba(0, 103, 120, 0.4) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 0% 0%,
+      #006778 0%,
+      #0b1c22 30%,
+      #101820 60%,
+      #020617 100%
+    );
+
+  /* Make the background huge so we can move around inside it */
+  background-size: 180% 180%;
+
+  /* The "Prowl" animation */
+  animation: prowl 20s ease-in-out infinite alternate;
 }
 
-p {
-  margin: 0;
-  padding: 0;
-}
-
-a {
-  padding-right: 10px;
-  cursor: pointer;
-  pointer-events: all;
-  color: black;
-  text-decoration: none; /* no underline */
-}
-
-@media screen and (max-width: 568px) {
-  .full {
-    visibility: hidden;
-    display: none;
+@keyframes prowl {
+  0% {
+    background-position: 0% 0%;
+    background-size: 150% 150%;
+  }
+  50% {
+    /* Simulates a light shifting across the field */
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 20% 100%;
+    /* Slight zoom creates a "breathing" effect */
+    background-size: 180% 180%;
   }
 }
