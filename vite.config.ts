@@ -8,5 +8,15 @@ export default defineConfig({
   build: {
     outDir: "dist", // ✅ BUILD OUTPUT
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000, // Three.js is inherently large
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ["three"],
+          "react-three": ["@react-three/fiber", "@react-three/drei", "@react-three/cannon"],
+          vendor: ["react", "react-dom"],
+        },
+      },
+    },
   },
 });
