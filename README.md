@@ -8,13 +8,13 @@ A visually stunning React Three Fiber experience featuring glass orbs with the J
 
 ## ✨ Features
 
-- **Physics-Driven Orbs**: 40 (desktop) / 20 (mobile) glass spheres with realistic gravity and collision detection
+- **Physics-Driven Orbs**: 40 (desktop) / 15 (mobile) glass spheres with realistic gravity and collision detection
 - **Interactive Control**: Move your mouse (or touch on mobile) to push the orbs around
 - **High-Quality Glass Material**: Physically-based transmission, refraction, and clearcoat for photorealistic appearance
 - **Environment Mapping**: Jacksonville Skyline reflected and refracted through the glass
 - **Animated Background**: Smooth "Prowl" gradient animation that shifts across the screen
-- **Mobile Optimized**: Adaptive sphere count and performance tuning for all devices
-- **Post-Processing Effects**: Screen-space ambient occlusion (N8AO) and temporal anti-aliasing (SMAA)
+- **Mobile Optimized**: Adaptive sphere count, simplified materials, and reduced texture sizes for mobile devices
+- **Post-Processing Effects**: Screen-space ambient occlusion (N8AO) and anti-aliasing (SMAA) on desktop
 
 ## 🎮 Interaction
 
@@ -26,23 +26,27 @@ A visually stunning React Three Fiber experience featuring glass orbs with the J
 
 The project is cleanly organized into modular components:
 
+```
 src/
 ├── components/
-│ ├── Scene.tsx # Main R3F scene, lighting, and physics setup
-│ ├── Clump.tsx # Instanced mesh physics bodies with glass material
-│ ├── Bounds.tsx # Physics world boundaries (6 planes)
-│ └── Pointer.tsx # Mouse/touch input handler
+│   ├── Scene.tsx       # Main R3F scene, lighting, and physics setup
+│   ├── Clump.tsx       # Instanced mesh physics bodies with glass material
+│   ├── Bounds.tsx      # Physics world boundaries (6 cuboid colliders)
+│   └── Pointer.tsx     # Mouse/touch input handler
 ├── utils/
-│ └── useJaguarDecal.ts # Custom hook for generating the logo texture
-├── App.tsx # Canvas wrapper and entry point
-└── index.css # Animated background + full-screen styling
+│   └── useJaguarDecal.ts # Custom hook for generating the logo texture
+├── App.tsx             # Canvas wrapper and entry point
+└── index.css           # Animated background + full-screen styling
+```
 
 ## 🚀 Performance Highlights
 
-- **Instanced Rendering**: Single draw call for all 40 glass spheres
-- **Clamped Device Pixel Ratio**: Maximum 1.5x DPR to prevent mobile GPU melt
-- **Adaptive Sphere Count**: Automatically reduces to 20 orbs on screens < 768px wide
-- **Efficient Physics**: Uses SAP broadphase with 20 solver iterations
+- **Instanced Rendering**: Single draw call for all glass spheres
+- **Clamped Device Pixel Ratio**: Maximum 1.5x DPR to prevent mobile GPU overload
+- **Adaptive Sphere Count**: Automatically reduces to 15 orbs on screens < 768px wide
+- **Mobile Material Fallback**: Uses simplified `meshStandardMaterial` instead of transmission on mobile
+- **Reduced Texture Size**: 512px decal texture on mobile vs 2048px on desktop
+- **Conditional Post-Processing**: N8AO and SMAA disabled on mobile for better frame rates
 - **No HTML Canvas Drawing in Every Frame**: Decal texture is generated once during load
 
 ## 🎨 Visual Details
@@ -50,7 +54,7 @@ src/
 | Property                  | Value                  |
 | ------------------------- | ---------------------- |
 | Glass IOR                 | 1.45                   |
-| Transmission              | 100%                   |
+| Transmission              | 100% (desktop only)    |
 | Roughness                 | 0.06                   |
 | Clearcoat                 | 1.0                    |
 | Attenuation Color         | Jaguars Teal (#006778) |
@@ -63,15 +67,17 @@ The animated background uses a radial gradient with an easing animation that cre
 - `react` - UI framework
 - `three` - 3D graphics engine
 - `@react-three/fiber` - React renderer for Three.js
-- `@react-three/cannon` - Physics engine integration
-- `@react-three/drei` - Useful R3F helpers (textures, post-processing)
+- `@react-three/rapier` - Rapier physics engine integration (WASM-based, better mobile support)
+- `@react-three/drei` - Useful R3F helpers (textures, etc.)
 - `@react-three/postprocessing` - High-quality post-processing effects
+
+> **Note**: This project previously used `@react-three/cannon` for physics but was migrated to `@react-three/rapier` for improved mobile compatibility. Cannon uses Web Workers which can fail silently on iOS Safari.
 
 ## 🔧 Getting Started
 
 ```bash
 # Clone or fork the project
-git clone <repo-url>
+git clone
 cd jacksonville-jaguars-orbs
 
 # Install dependencies
