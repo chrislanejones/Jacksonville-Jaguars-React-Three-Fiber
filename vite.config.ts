@@ -1,19 +1,22 @@
-// vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  publicDir: "public", // ✅ static assets live here
+  publicDir: "public",
   build: {
-    outDir: "dist", // ✅ BUILD OUTPUT
+    outDir: "dist",
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1000, // Three.js is inherently large
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
           three: ["three"],
-          "react-three": ["@react-three/fiber", "@react-three/drei", "@react-three/cannon"],
+          "react-three": [
+            "@react-three/fiber",
+            "@react-three/drei",
+            "@react-three/rapier",
+          ],
           vendor: ["react", "react-dom"],
         },
       },
