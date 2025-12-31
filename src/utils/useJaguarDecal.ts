@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { useEffect, useState } from "react";
 
-export function useJaguarDecal() {
+export function useJaguarDecal(isMobile: boolean = false) {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
@@ -12,7 +12,7 @@ export function useJaguarDecal() {
     img.onload = () => {
       if (disposed) return;
 
-      const canvasSize = 2048;
+      const canvasSize = isMobile ? 512 : 2048;
       const canvas = document.createElement("canvas");
       canvas.width = canvasSize;
       canvas.height = canvasSize;
@@ -23,7 +23,6 @@ export function useJaguarDecal() {
 
       const scale = 0.5;
       const aspect = img.width / img.height;
-
       let drawW, drawH;
       if (aspect > 1) {
         drawW = canvasSize * scale;
@@ -35,16 +34,13 @@ export function useJaguarDecal() {
 
       const x = (canvasSize - drawW) / 2;
       const y = (canvasSize - drawH) / 2;
-
       ctx.drawImage(img, x, y, drawW, drawH);
 
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = 16;
+      tex.anisotropy = isMobile ? 4 : 16;
       tex.generateMipmaps = true;
       tex.needsUpdate = true;
-
-      // FIX SKEW via Texture Repeat
       tex.repeat.set(1.15, 1);
       tex.offset.set((1 - tex.repeat.x) / 2, (1 - tex.repeat.y) / 2);
 
@@ -61,7 +57,7 @@ export function useJaguarDecal() {
         return null;
       });
     };
-  }, []);
+  }, [isMobile]);
 
   return texture;
 }

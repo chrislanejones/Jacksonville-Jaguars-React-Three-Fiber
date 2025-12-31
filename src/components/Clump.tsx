@@ -1,56 +1,74 @@
+// src/components/Clump.tsx
 import * as THREE from "three";
 import React, { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useSphere } from "@react-three/cannon";
+import {
+  InstancedRigidBodies,
+  InstancedRigidBodyProps,
+  RapierRigidBody,
+} from "@react-three/rapier";
 import { useJaguarDecal } from "../utils/useJaguarDecal";
 
 const rfs = THREE.MathUtils.randFloatSpread;
-const glassGeometry = new THREE.SphereGeometry(1, 32, 32);
-const decalGeometry = new THREE.SphereGeometry(1.015, 32, 32);
 
-export function Clump({ count = 40 }: { count?: number }) {
+interface ClumpProps {
+  count?: number;
+  isMobile?: boolean;
+}
+
+export function Clump({ count = 40, isMobile = false }: ClumpProps) {
+  // This is the correct ref type for InstancedRigidBodies
+  const rigidBodies = useRef<(RapierRigidBody | null)[]>([]);
   const glassRef = useRef<THREE.InstancedMesh>(null);
   const decalRef = useRef<THREE.InstancedMesh>(null);
-  const decalTex = useJaguarDecal();
+  const decalTex = useJaguarDecal(isMobile);
 
   const tempMat = useMemo(() => new THREE.Matrix4(), []);
   const tempVec = useMemo(() => new THREE.Vector3(), []);
   const forceVec = useMemo(() => new THREE.Vector3(), []);
 
-  // Physics driver (hidden)
-  const [physRef, api] = useSphere<THREE.InstancedMesh>(() => ({
-    args: [1],
-    mass: 1.5,
-    angularDamping: 0.65,
-    linearDamping: 0.85,
-    position: [rfs(8), rfs(8), rfs(8)],
-  }));
+  const instances = useMemo<InstancedRigidBodyProps[]>(() => {
+    return Array.from({ length: count }, (_, i) => ({
+      key: `sphere-${i}`,
+      position: [rfs(8), rfs(8), rfs(8)] as [number, number, number],
+      rotation: [0, 0, 0] as [number, number, number],
+    }));
+  }, [count]);
 
   useFrame(() => {
-    const phys = physRef.current;
     const glass = glassRef.current;
     const decal = decalRef.current;
-    if (!phys || !glass || !decal) return;
+    const bodies = rigidBodies.current;
+    if (!glass || !decal || !bodies.length) return;
 
     const k = 12;
     const softening = 0.25;
 
     for (let i = 0; i < count; i++) {
-      phys.getMatrixAt(i, tempMat);
+      const body = bodies[i];
+      if (!body) continue;
 
-      // position of this instance (approx)
-      tempVec.setFromMatrixPosition(tempMat);
+      const pos = body.translation();
+      tempVec.set(pos.x, pos.y, pos.z);
 
-      // Smooth spring pull toward origin
+      // Spring force toward origin
       const dist = tempVec.length();
       forceVec.copy(tempVec).multiplyScalar(-k);
       forceVec.multiplyScalar(1 / (1 + dist * softening));
 
-      api
-        .at(i)
-        .applyForce(forceVec.toArray() as [number, number, number], [0, 0, 0]);
+      // Apply as impulse (scaled by approximate frame time)
+      body.applyImpulse(
+        { x: forceVec.x * 0.016, y: forceVec.y * 0.016, z: forceVec.z * 0.016 },
+        true
+      );
 
-      // Sync visible layers to physics
+      const rot = body.rotation();
+      tempMat.compose(
+        tempVec,
+        new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w),
+        new THREE.Vector3(1, 1, 1)
+      );
+
       glass.setMatrixAt(i, tempMat);
       decal.setMatrixAt(i, tempMat);
     }
@@ -59,38 +77,61 @@ export function Clump({ count = 40 }: { count?: number }) {
     decal.instanceMatrix.needsUpdate = true;
   });
 
+  const glassMaterial = isMobile ? (
+    <meshStandardMaterial
+      color="#006778"
+      transparent
+      opacity={0.85}
+      roughness={0.1}
+      metalness={0.1}
+    />
+  ) : (
+    <meshPhysicalMaterial
+      transmission={1}
+      roughness={0.06}
+      thickness={1.2}
+      ior={1.45}
+      clearcoat={1}
+      clearcoatRoughness={0.08}
+      envMapIntensity={1.6}
+      attenuationColor="#006778"
+      attenuationDistance={3}
+    />
+  );
+
   return (
     <group>
-      {/* Physics driver (invisible) */}
-      <instancedMesh
-        ref={physRef}
-        args={[glassGeometry, undefined, count]}
-        visible={false}
-      />
+      {/* Physics bodies - use colliders="ball" to auto-generate sphere colliders */}
+      <InstancedRigidBodies
+        ref={rigidBodies}
+        instances={instances}
+        colliders="ball"
+        linearDamping={0.85}
+        angularDamping={0.65}
+      >
+        <instancedMesh args={[undefined, undefined, count]}>
+          <sphereGeometry args={[1, 8, 8]} />
+          <meshBasicMaterial visible={false} />
+        </instancedMesh>
+      </InstancedRigidBodies>
 
-      {/* GLASS BALL */}
+      {/* Visual glass spheres */}
       <instancedMesh
         ref={glassRef}
         castShadow
         receiveShadow
-        args={[glassGeometry, undefined, count]}
+        args={[undefined, undefined, count]}
       >
-        <meshPhysicalMaterial
-          transmission={1}
-          roughness={0.06}
-          thickness={1.2}
-          ior={1.45}
-          clearcoat={1}
-          clearcoatRoughness={0.08}
-          envMapIntensity={1.6}
-          attenuationColor="#006778"
-          attenuationDistance={3}
-        />
+        <sphereGeometry args={[1, isMobile ? 16 : 32, isMobile ? 16 : 32]} />
+        {glassMaterial}
       </instancedMesh>
 
-      {/* LOGO DECAL */}
+      {/* Logo decal layer */}
       {decalTex && (
-        <instancedMesh ref={decalRef} args={[decalGeometry, undefined, count]}>
+        <instancedMesh ref={decalRef} args={[undefined, undefined, count]}>
+          <sphereGeometry
+            args={[1.015, isMobile ? 16 : 32, isMobile ? 16 : 32]}
+          />
           <meshStandardMaterial
             map={decalTex}
             transparent

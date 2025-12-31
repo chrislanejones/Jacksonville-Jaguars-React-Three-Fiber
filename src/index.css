@@ -52,3 +52,7 @@ body {
     background-size: 180% 180%;
   }
 }
+
+canvas {
+  touch-action: none;
+}
